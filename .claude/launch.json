@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "band-rehearsal-manager",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "--prefix", "web", "dev"],
+      "port": 3000
+    }
+  ]
+}
