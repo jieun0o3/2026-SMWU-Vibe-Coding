@@ -1,31 +1,62 @@
 import Link from 'next/link';
-import RehearsalTodayBanner from '@/components/RehearsalTodayBanner';
+
+const NAV_CARDS = [
+  {
+    href: '/schedule',
+    icon: '📅',
+    title: '개인 일정 등록',
+    desc: '합주에 참여하기 어려운 날짜를 등록하세요.',
+  },
+  {
+    href: '/planner',
+    icon: '⚙️',
+    title: '합주 일정 배분',
+    desc: '공연 날짜를 기준으로 합주를 자동으로 배정합니다.',
+  },
+  {
+    href: '/calendar',
+    icon: '🗓️',
+    title: '합주 캘린더',
+    desc: '남은 합주 일정을 달력으로 확인하세요.',
+  },
+];
 
 export default function LandingPage() {
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 space-y-8">
-      <RehearsalTodayBanner />
-
-      <div className="text-center space-y-3 py-4">
-        <h1 className="text-4xl font-bold text-indigo-700">🎸 합주 매니저</h1>
-        <p className="text-gray-500 text-lg">밴드 멤버들의 합주 일정 관리와 공연 준비를 한 곳에서</p>
+    <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
+      {/* Hero */}
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl text-3xl mb-2">
+          🎸
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">합주 매니저</h1>
+        <p className="text-gray-500 text-base">밴드 멤버들의 합주 일정 관리와 공연 준비를 한 곳에서</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {[
-          { href: '/schedule', title: '개인 일정 등록', desc: '합주에 참여하기 어려운 날짜를 등록하세요.', icon: '📅' },
-          { href: '/planner', title: '합주 일정 배분', desc: '공연 날짜를 기준으로 합주를 자동으로 배정합니다.', icon: '⚙️' },
-          { href: '/calendar', title: '합주 캘린더', desc: '남은 합주 일정을 달력으로 확인하세요.', icon: '🗓️' },
-        ].map((item) => (
-          <Link key={item.href} href={item.href} className="block border rounded-xl p-5 bg-white hover:border-indigo-400 hover:shadow-sm transition">
-            <p className="font-semibold text-indigo-700">{item.icon} {item.title}</p>
-            <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
+      {/* Navigation Cards */}
+      <div className="grid grid-cols-1 gap-3">
+        {NAV_CARDS.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:border-purple-300 hover:shadow-md transition"
+          >
+            <span className="text-2xl">{item.icon}</span>
+            <div>
+              <p className="font-semibold text-gray-900">{item.title}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{item.desc}</p>
+            </div>
+            <span className="ml-auto text-gray-300 text-lg">›</span>
           </Link>
         ))}
       </div>
 
-      <div className="text-center">
-        <Link href="/planner" className="inline-block bg-indigo-600 text-white rounded-lg px-8 py-3 font-medium hover:bg-indigo-700 transition">
+      {/* CTA */}
+      <div className="text-center pt-2">
+        <Link
+          href="/planner"
+          className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl px-8 py-3 text-sm transition shadow-sm"
+        >
           합주 일정 잡기
         </Link>
       </div>

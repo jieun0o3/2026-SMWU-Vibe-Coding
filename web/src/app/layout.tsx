@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import RehearsalTodayBanner from "@/components/RehearsalTodayBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,6 +23,9 @@ export default function RootLayout({
     <html lang="ko" className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-gray-50">
         <Header />
+        <div className="max-w-2xl mx-auto w-full px-4 pt-4">
+          <RehearsalTodayBanner />
+        </div>
         <main className="flex-1">{children}</main>
       </body>
     </html>
