@@ -3,6 +3,18 @@ export interface Member {
   name: string;
 }
 
+export interface Team {
+  id: string;
+  name: string;
+  memberIds: string[];
+}
+
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+}
+
 export interface PersonalSchedule {
   id: string;
   memberId: string;
@@ -22,6 +34,9 @@ export interface RehearsalSession {
   date: string; // ISO date string YYYY-MM-DD
   time: string; // HH:MM
   order: number; // 1-based index among all rehearsals
+  label?: string; // team name or "title - artist"
+  groupId?: string; // teamId or songId
+  groupType?: 'team' | 'song';
 }
 
 export interface Feedback {

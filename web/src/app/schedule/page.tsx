@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Member, PersonalSchedule } from '@/types';
 import { toLocalISO } from '@/lib/utils';
+import { useMemberSession } from '@/hooks/useMemberSession';
 
 function getMonthDays(year: number, month: number): Date[] {
   const days: Date[] = [];
@@ -15,8 +16,10 @@ function getMonthDays(year: number, month: number): Date[] {
 }
 
 export default function SchedulePage() {
+  const { memberId: sessionMemberId, setMemberId: saveSession, clearMember } = useMemberSession();
+
   const [members, setMembers] = useState<Member[]>([]);
-  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [pendingSelect, setPendingSelect] = useState('');
   const [mySchedules, setMySchedules] = useState<PersonalSchedule[]>([]);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
@@ -33,11 +36,11 @@ export default function SchedulePage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedMemberId) { setMySchedules([]); return; }
-    fetch(`/api/personal-schedules?memberId=${selectedMemberId}`)
+    if (!sessionMemberId) { setMySchedules([]); return; }
+    fetch(`/api/personal-schedules?memberId=${sessionMemberId}`)
       .then((r) => r.json())
       .then(setMySchedules);
-  }, [selectedMemberId]);
+  }, [sessionMemberId]);
 
   function toggleDate(iso: string) {
     setSelectedDates((prev) => {
@@ -48,7 +51,7 @@ export default function SchedulePage() {
   }
 
   async function handleSave() {
-    if (!selectedMemberId) { setError('멤버를 선택해주세요.'); return; }
+    if (!sessionMemberId) { setError('본인을 먼저 설정해주세요.'); return; }
     if (selectedDates.size === 0) { setError('날짜를 선택해주세요.'); return; }
     setError('');
     setSaving(true);
@@ -56,7 +59,7 @@ export default function SchedulePage() {
       const res = await fetch('/api/personal-schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memberId: selectedMemberId, dates: [...selectedDates] }),
+        body: JSON.stringify({ memberId: sessionMemberId, dates: [...selectedDates] }),
       });
       if (res.ok) {
         const added: PersonalSchedule[] = await res.json();
@@ -77,34 +80,63 @@ export default function SchedulePage() {
     setMySchedules((prev) => prev.filter((s) => s.id !== id));
   }
 
+  const currentMember = members.find((m) => m.id === sessionMemberId);
   const blockedSet = new Set(mySchedules.map((s) => s.date));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">개인 일정 등록</h1>
 
-      {/* 멤버 선택 */}
+      {/* 본인 설정 */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-3">
-        <h2 className="text-base font-semibold text-gray-800">멤버 선택</h2>
-        <select
-          className="border border-gray-200 rounded-xl px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-          value={selectedMemberId}
-          onChange={(e) => setSelectedMemberId(e.target.value)}
-        >
-          <option value="">-- 멤버를 선택하세요 --</option>
-          {members.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
+        <h2 className="text-base font-semibold text-gray-800">내 정보</h2>
+
+        {sessionMemberId && currentMember ? (
+          <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-purple-600 font-bold text-sm">{currentMember.name}</span>
+              <span className="text-purple-500 text-xs">님의 불가 날짜를 관리하고 있습니다.</span>
+            </div>
+            <button
+              onClick={clearMember}
+              className="text-xs text-gray-400 hover:text-gray-600 font-medium transition"
+            >
+              변경
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+              나는 누구인가요? 멤버를 선택하면 이 기기에서 본인 일정만 관리할 수 있습니다.
+            </p>
+            <div className="flex gap-2">
+              <select
+                className="border border-gray-200 rounded-xl px-3 py-2 flex-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                value={pendingSelect}
+                onChange={(e) => setPendingSelect(e.target.value)}
+              >
+                <option value="">-- 멤버를 선택하세요 --</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => { if (pendingSelect) saveSession(pendingSelect); }}
+                disabled={!pendingSelect}
+                className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded-xl px-4 py-2 text-sm font-semibold transition shrink-0"
+              >
+                설정하기
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 캘린더 날짜 선택 */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-4">
         <h2 className="text-base font-semibold text-gray-800">불가 날짜 선택</h2>
-        {!selectedMemberId && (
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-            멤버를 먼저 선택하면 이미 등록된 불가 날짜가 빨간색으로 표시됩니다.
-          </p>
+        {!sessionMemberId && (
+          <p className="text-xs text-gray-400">본인을 설정하면 캘린더를 사용할 수 있습니다.</p>
         )}
 
         <div className="flex items-center justify-between">
@@ -127,7 +159,7 @@ export default function SchedulePage() {
           {['일', '월', '화', '수', '목', '금', '토'].map((d) => <div key={d}>{d}</div>)}
         </div>
 
-        <div className={`grid grid-cols-7 gap-1 ${!selectedMemberId ? 'opacity-60' : ''}`}>
+        <div className={`grid grid-cols-7 gap-1 ${!sessionMemberId ? 'opacity-40 pointer-events-none' : ''}`}>
           {Array(firstDay).fill(null).map((_, i) => <div key={`e${i}`} />)}
           {days.map((d) => {
             const iso = toLocalISO(d);
@@ -159,14 +191,14 @@ export default function SchedulePage() {
 
       <button
         onClick={handleSave}
-        disabled={saving}
+        disabled={saving || !sessionMemberId}
         className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded-xl py-3 font-semibold text-sm transition"
       >
         {saving ? '저장 중...' : '불가 날짜 저장'}
       </button>
 
       {/* 등록된 불가 날짜 목록 */}
-      {selectedMemberId && (
+      {sessionMemberId && (
         <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 space-y-3">
           <h2 className="text-base font-semibold text-gray-800">등록된 불가 날짜</h2>
           {mySchedules.length === 0 ? (

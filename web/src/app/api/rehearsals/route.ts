@@ -24,6 +24,9 @@ export async function POST(req: Request) {
     date: s.date,
     time: s.time,
     order: 0,
+    ...(s.label && { label: s.label }),
+    ...(s.groupId && { groupId: s.groupId }),
+    ...(s.groupType && { groupType: s.groupType }),
   }));
   const updated = reorder([...sessions, ...created]);
   writeJson('rehearsals.json', updated);

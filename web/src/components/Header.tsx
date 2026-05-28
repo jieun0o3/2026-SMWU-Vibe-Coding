@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Performance } from '@/types';
+import { BandLogo } from './BandLogo';
 
 function getDday(perfDate: string): string {
   const today = new Date();
@@ -33,8 +34,9 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="font-bold text-lg text-purple-700 tracking-tight">
-          🎸 합주 매니저
+        <Link href="/" className="flex items-center gap-2 font-bold text-lg text-purple-700 tracking-tight">
+          <BandLogo size={28} />
+          <span>합주 매니저</span>
         </Link>
         <nav className="flex gap-1 text-sm">
           {NAV_LINKS.map(({ href, label }) => {

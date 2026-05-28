@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BandLogo } from '@/components/BandLogo';
 
 const NAV_CARDS = [
   {
@@ -11,7 +12,7 @@ const NAV_CARDS = [
     href: '/planner',
     icon: '⚙️',
     title: '합주 일정 배분',
-    desc: '공연 날짜를 기준으로 합주를 자동으로 배정합니다.',
+    desc: '팀별·곡별로 합주를 자동으로 배정합니다.',
   },
   {
     href: '/calendar',
@@ -26,9 +27,7 @@ export default function LandingPage() {
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       {/* Hero */}
       <div className="text-center space-y-3 py-6">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-2xl text-3xl mb-2">
-          🎸
-        </div>
+        <BandLogo size={72} className="mx-auto mb-2" />
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">합주 매니저</h1>
         <p className="text-gray-500 text-base">밴드 멤버들의 합주 일정 관리와 공연 준비를 한 곳에서</p>
       </div>
