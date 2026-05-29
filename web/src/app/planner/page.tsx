@@ -83,6 +83,7 @@ export default function PlannerPage() {
 
   async function handleAddMember() {
     if (!newMemberName.trim()) { setMemberError('이름을 입력해주세요.'); return; }
+    if (members.some((m) => m.name === newMemberName.trim())) { setMemberError('이미 등록된 멤버입니다.'); return; }
     setMemberError('');
     const res = await fetch('/api/members', {
       method: 'POST',

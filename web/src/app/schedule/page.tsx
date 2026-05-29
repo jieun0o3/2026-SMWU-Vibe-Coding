@@ -23,6 +23,8 @@ export default function SchedulePage() {
   const [mySchedules, setMySchedules] = useState<PersonalSchedule[]>([]);
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
+  const [memberSelectError, setMemberSelectError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
   const [viewDate, setViewDate] = useState(new Date());
   const [saving, setSaving] = useState(false);
 
@@ -30,6 +32,7 @@ export default function SchedulePage() {
   const month = viewDate.getMonth();
   const days = getMonthDays(year, month);
   const firstDay = new Date(year, month, 1).getDay();
+  const todayIso = toLocalISO(new Date());
 
   useEffect(() => {
     fetch('/api/members').then((r) => r.json()).then(setMembers);
@@ -43,6 +46,7 @@ export default function SchedulePage() {
   }, [sessionMemberId]);
 
   function toggleDate(iso: string) {
+    if (iso < todayIso) return;
     setSelectedDates((prev) => {
       const next = new Set(prev);
       next.has(iso) ? next.delete(iso) : next.add(iso);
@@ -54,6 +58,7 @@ export default function SchedulePage() {
     if (!sessionMemberId) { setError('본인을 먼저 설정해주세요.'); return; }
     if (selectedDates.size === 0) { setError('날짜를 선택해주세요.'); return; }
     setError('');
+    setSaveSuccess('');
     setSaving(true);
     try {
       const res = await fetch('/api/personal-schedules', {
@@ -65,19 +70,27 @@ export default function SchedulePage() {
         const added: PersonalSchedule[] = await res.json();
         setMySchedules((prev) => [...prev, ...added]);
         setSelectedDates(new Set());
+        setSaveSuccess(`${added.length}개 날짜가 저장되었습니다.`);
+        setTimeout(() => setSaveSuccess(''), 3000);
+      } else {
+        setError('저장에 실패했습니다. 다시 시도해주세요.');
       }
+    } catch {
+      setError('네트워크 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    await fetch('/api/personal-schedules', {
+    const res = await fetch('/api/personal-schedules', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    setMySchedules((prev) => prev.filter((s) => s.id !== id));
+    if (res.ok) {
+      setMySchedules((prev) => prev.filter((s) => s.id !== id));
+    }
   }
 
   const currentMember = members.find((m) => m.id === sessionMemberId);
@@ -121,13 +134,17 @@ export default function SchedulePage() {
                 ))}
               </select>
               <button
-                onClick={() => { if (pendingSelect) saveSession(pendingSelect); }}
-                disabled={!pendingSelect}
-                className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white rounded-xl px-4 py-2 text-sm font-semibold transition shrink-0"
+                onClick={() => {
+                  if (!pendingSelect) { setMemberSelectError('멤버를 선택해주세요.'); return; }
+                  setMemberSelectError('');
+                  saveSession(pendingSelect);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 text-sm font-semibold transition shrink-0"
               >
                 설정하기
               </button>
             </div>
+            {memberSelectError && <p className="text-red-500 text-sm">{memberSelectError}</p>}
           </div>
         )}
       </div>
@@ -165,14 +182,17 @@ export default function SchedulePage() {
             const iso = toLocalISO(d);
             const isBlocked = blockedSet.has(iso);
             const isSelected = selectedDates.has(iso);
+            const isPast = iso < todayIso;
             return (
               <button
                 key={iso}
                 onClick={() => toggleDate(iso)}
+                disabled={isPast}
                 className={`rounded-xl py-1.5 text-sm border transition font-medium
-                  ${isBlocked ? 'bg-red-50 border-red-200 text-red-500' : ''}
-                  ${isSelected ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : ''}
-                  ${!isBlocked && !isSelected ? 'border-gray-100 hover:bg-purple-50 hover:border-purple-200 text-gray-700' : ''}
+                  ${isPast ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed' : ''}
+                  ${!isPast && isBlocked ? 'bg-red-50 border-red-200 text-red-500' : ''}
+                  ${!isPast && isSelected ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : ''}
+                  ${!isPast && !isBlocked && !isSelected ? 'border-gray-100 hover:bg-purple-50 hover:border-purple-200 text-gray-700' : ''}
                 `}
               >
                 {d.getDate()}
@@ -188,6 +208,11 @@ export default function SchedulePage() {
       </div>
 
       {error && <p className="text-red-500 text-sm px-1">{error}</p>}
+      {saveSuccess && (
+        <p className="text-green-700 text-sm bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          ✓ {saveSuccess}
+        </p>
+      )}
 
       <button
         onClick={handleSave}
